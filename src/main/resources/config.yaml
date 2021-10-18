@@ -1,0 +1,19 @@
+http:
+  port: "8081"
+
+walmart:
+  host_key: "x-rapidapi-host"
+  host: "walmart.p.rapidapi.com"
+  api_key: "x-rapidapi-key"
+  key_value: "0494e0913dmshf14d2d94c10fcf1p1c02e5jsn8df43b713074"
+  storeEndpoint: "/stores/list"
+  productEndpoint: "/products/v2/get-details"
+  
+mysql:
+  server: "sql6.freemysqlhosting.net"
+  name: "sql6444041"
+  username: "sql6444041"
+  port: "3306"
+  password: "F5TPKhfAeI"
+  database: "sql6444041"
+  table : "stores"

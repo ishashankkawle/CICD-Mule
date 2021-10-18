@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="getNearestStore" doc:id="8f38824b-e729-4027-8a50-795f65e30342" >
+		<http:request method="GET" doc:name="Call Walmart store api " doc:id="fa611668-8d08-457e-99e8-224bb55c1828" config-ref="HTTP_Request_configuration" path="${walmart.storeEndpoint}">
+			<reconnect />
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"x-rapidapi-key" : "0494e0913dmshf14d2d94c10fcf1p1c02e5jsn8df43b713074",
+	"x-rapidapi-host" : "walmart.p.rapidapi.com"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"postalCode" : attributes.queryParams.postalCode
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Format address" doc:id="af7c9e2d-f1f4-4d2c-9a20-0354ba966b28" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var data = payload.data.storesBySearchTerm.stores[0]
+fun getAddress(obj : Object)
+= obj.address.address ++ ", " ++ obj.address.city ++ ", " ++ obj.address.state ++ ", " ++ obj.address.country ++ " (" ++ obj.address.postalCode ++ ")"
+---
+getAddress(data)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d9deeb06-9267-4633-baa3-cd156d325cee" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="53b41f73-76c6-426f-80e3-a14bdb888c1c" message="#[payload]"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="getProductDetails" doc:id="0679ee03-08b0-4d44-b3f5-6fbca3629e28" >
+		<http:request method="GET" doc:name="Call Walmart product API" doc:id="d5da5aa2-f8dc-48fe-8081-8792367d150d" config-ref="HTTP_Request_configuration" path="${walmart.productEndpoint}" >
+			<reconnect />
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"x-rapidapi-key" : "0494e0913dmshf14d2d94c10fcf1p1c02e5jsn8df43b713074",
+	"x-rapidapi-host" : "walmart.p.rapidapi.com"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"usItemId" : attributes.queryParams.useItemId
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Get product data from payload" doc:id="6455ff2e-6d72-4772-a604-8c1b20381a5f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9a59a9c9-22d5-43bc-afba-6460bbc19d29" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="cdf30d16-658e-4765-94ba-0679a8ce996f" message="#[payload]"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="addOrderInDatabase" doc:id="c587cbb0-3cd1-4e93-9f24-d1260bb3cb8e" >
+		<db:insert doc:name="Insert" doc:id="03f5c1ba-7a17-443c-9f5d-27f11be1d35f" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO stores (order_id , store_id , store_name , store_address , store_distance , store_contact_number , quantity )
+VALUES ( :orderid , :storeid , :storename , :storeaddress , :storedistance , :contact , :quantity )]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	orderid : payload.orderid , 
+	storeid : payload.storeid , 
+	storename : payload.storename , 
+	storeaddress : payload.storeaddress , 
+	storedistance : payload.storedistance , 
+	contact : payload.contact , 
+	quantity : payload.quantity , 
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="8b2bbb53-4f86-44fe-a500-dd26fd70f812" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Message" : "Record added successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="807ef587-61a2-4b06-bfb4-fe10bd6e2c31" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="10e5c7e4-7ade-4929-b658-f6682a4b8b7e" message="#[payload]"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>
