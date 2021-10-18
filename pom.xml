@@ -38,6 +38,7 @@
 						<applicationName>Walmart-UC</applicationName>
 						<environment>Sandbox</environment>
 						<region>us-east-2</region>
+						<objectStoreV2>true</objectStoreV2>
 						<workers>1</workers>
 						<workerType>MICRO</workerType>
 					</cloudHubDeployment>
