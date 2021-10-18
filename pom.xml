@@ -115,6 +115,13 @@
 			<version>1.0.2</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>748d7eb2-d1b2-457d-9316-39702254d668</groupId>
+			<artifactId>walmart-uc</artifactId>
+			<version>1.0.0</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
