@@ -35,7 +35,7 @@
 						<muleVersion>4.3.0</muleVersion>
 						<username>${username}</username>
 						<password>${password}</password>
-						<applicationName>Walmart_UC</applicationName>
+						<applicationName>Walmart_UC_sha05</applicationName>
 						<environment>Sandbox</environment>
 						<region>us-east-2</region>
 						<workers>1</workers>
